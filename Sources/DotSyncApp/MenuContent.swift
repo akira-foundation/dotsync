@@ -40,6 +40,7 @@ struct MenuContent: View {
                     blocked: model.blocked.contains(row.id),
                     onSync: { model.syncNow(row.id) },
                     onSetup: { model.onboard(row.id) },
+                    onResolve: { model.resolveConflict(row.id) },
                     onToggleAuto: { model.toggleAuto(row.id) },
                     onRemove: { model.removeRoot(row.id) })
                 if index < model.rows.count - 1 {
@@ -69,18 +70,6 @@ struct MenuContent: View {
             .buttonStyle(.glass)
             .controlSize(.small)
             .help(showSettings ? "Back" : "Settings")
-
-            if !showSettings {
-                Button {
-                    model.refresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .buttonStyle(.glass)
-                .controlSize(.small)
-                .help("Refresh")
-            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -139,6 +128,7 @@ struct RootRow: View {
     let blocked: Bool
     let onSync: () -> Void
     let onSetup: () -> Void
+    let onResolve: () -> Void
     let onToggleAuto: () -> Void
     let onRemove: () -> Void
     @SwiftUI.State private var hover = false
@@ -192,6 +182,14 @@ struct RootRow: View {
                 .buttonStyle(.glassProminent)
                 .controlSize(.small)
                 .help("Create repo and push")
+            } else if row.conflict {
+                Button(action: onResolve) {
+                    Text("Resolve").font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.glassProminent)
+                .controlSize(.small)
+                .tint(.orange)
+                .help("Resolve conflict")
             } else {
                 Button(action: onSync) {
                     Image(systemName: "arrow.triangle.2.circlepath")
