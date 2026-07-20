@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class MergeDriverTests: XCTestCase {
@@ -23,7 +24,8 @@ final class MergeDriverTests: XCTestCase {
         let r = try Shell.run("/bin/bash", [script.path, base.path, ours.path, theirs.path])
         XCTAssertEqual(r.exitCode, 0, r.stderr)
 
-        let merged = try JSONSerialization.jsonObject(with: Data(contentsOf: ours)) as! [String: Any]
+        let merged =
+            try JSONSerialization.jsonObject(with: Data(contentsOf: ours)) as! [String: Any]
         XCTAssertEqual(merged["model"] as? String, "sonnet")
         let allow = (merged["permissions"] as! [String: Any])["allow"] as! [String]
         XCTAssertEqual(allow.sorted(), ["a", "b", "c"])
@@ -74,7 +76,8 @@ final class MergeDriverTests: XCTestCase {
         _ = try g.run(["commit", "--no-verify", "-m", "add c"])
 
         let pull = try g.run(["pull", "--rebase", "--autostash", "origin", "main"])
-        XCTAssertTrue(pull.ok, "jsonmerge driver should deep-merge instead of conflicting: \(pull.stderr)")
+        XCTAssertTrue(
+            pull.ok, "jsonmerge driver should deep-merge instead of conflicting: \(pull.stderr)")
 
         let data = try Data(contentsOf: fx.work.appendingPathComponent("settings.json"))
         let merged = try JSONSerialization.jsonObject(with: data) as! [String: Any]

@@ -1,4 +1,5 @@
 import Foundation
+
 @testable import DotSyncCore
 
 struct GitFixture {
@@ -26,7 +27,11 @@ struct GitFixture {
         _ = try g.run(["add", "-A"])
         _ = try g.run(["commit", "--no-verify", "-m", "seed"])
         let pushResult = try g.run(["push", "--no-verify", "-u", "origin", "main"])
-        guard pushResult.ok else { throw NSError(domain: "git", code: 1, userInfo: [NSLocalizedDescriptionKey: "git push failed: \(pushResult.stderr)"]) }
+        guard pushResult.ok else {
+            throw NSError(
+                domain: "git", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "git push failed: \(pushResult.stderr)"])
+        }
         return f
     }
 

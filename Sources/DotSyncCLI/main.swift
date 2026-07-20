@@ -1,10 +1,12 @@
-import Foundation
 import DotSyncCore
+import Foundation
 
 let home = FileManager.default.homeDirectoryForCurrentUser
-let configURL = ProcessInfo.processInfo.environment["DOTSYNC_CONFIG"].map(URL.init(fileURLWithPath:))
+let configURL =
+    ProcessInfo.processInfo.environment["DOTSYNC_CONFIG"].map(URL.init(fileURLWithPath:))
     ?? home.appendingPathComponent(".dotsync/config.json")
-let binDir = ProcessInfo.processInfo.environment["DOTSYNC_BIN"].map(URL.init(fileURLWithPath:))
+let binDir =
+    ProcessInfo.processInfo.environment["DOTSYNC_BIN"].map(URL.init(fileURLWithPath:))
     ?? home.appendingPathComponent(".dotsync/bin")
 
 func isoNow() -> String {

@@ -53,15 +53,17 @@ public enum SecretScanner {
 
     public static func scanRepo(_ repo: URL) -> SecretScanReport {
         let git = Git(repo: repo)
-        let tracked = (try? git.run(["ls-files"]).stdout
-            .split(separator: "\n", omittingEmptySubsequences: true)
-            .map(String.init)) ?? []
+        let tracked =
+            (try? git.run(["ls-files"]).stdout
+                .split(separator: "\n", omittingEmptySubsequences: true)
+                .map(String.init)) ?? []
 
         var files: [(name: String, content: String)] = []
         for relative in tracked {
             let url = repo.appendingPathComponent(relative)
             guard let data = try? Data(contentsOf: url), data.count < 1_000_000,
-                  let text = String(data: data, encoding: .utf8) else { continue }
+                let text = String(data: data, encoding: .utf8)
+            else { continue }
             files.append((name: relative, content: text))
         }
 

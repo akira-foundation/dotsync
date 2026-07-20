@@ -18,13 +18,15 @@ public struct Onboarder: Sendable {
     public let settings: Settings
     private let gh: GhBridge
     private let confirm: @Sendable (OnboardStep) -> Bool
-    private let remoteURLBuilder: @Sendable (_ host: String, _ owner: String, _ name: String) -> String
+    private let remoteURLBuilder:
+        @Sendable (_ host: String, _ owner: String, _ name: String) -> String
 
     public init(
         settings: Settings,
         gh: GhBridge,
         confirm: @escaping @Sendable (OnboardStep) -> Bool,
-        remoteURLBuilder: @escaping @Sendable (String, String, String) -> String = { host, owner, name in
+        remoteURLBuilder: @escaping @Sendable (String, String, String) -> String = {
+            host, owner, name in
             "git@\(host):\(owner)/\(name).git"
         }
     ) {

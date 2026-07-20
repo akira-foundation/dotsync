@@ -1,13 +1,16 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class OnboarderTests: XCTestCase {
     func testPlan() {
-        XCTAssertEqual(Onboarder.plan(isRepo: false, hasRemote: false),
-                       [.initGit, .createRemote(owner: "", name: ""), .commitAndPush])
+        XCTAssertEqual(
+            Onboarder.plan(isRepo: false, hasRemote: false),
+            [.initGit, .createRemote(owner: "", name: ""), .commitAndPush])
         XCTAssertEqual(Onboarder.plan(isRepo: true, hasRemote: true), [.commitAndPush])
-        XCTAssertEqual(Onboarder.plan(isRepo: true, hasRemote: false),
-                       [.createRemote(owner: "", name: ""), .commitAndPush])
+        XCTAssertEqual(
+            Onboarder.plan(isRepo: true, hasRemote: false),
+            [.createRemote(owner: "", name: ""), .commitAndPush])
     }
 
     private func tempDir() -> URL {
@@ -32,17 +35,19 @@ final class OnboarderTests: XCTestCase {
     private func fakeGh(exists: Bool) -> GhBridge {
         GhBridge(host: "github.com") { args in
             if args.first == "repo", args.dropFirst().first == "view" {
-                return ShellResult(stdout: exists ? "{}" : "",
-                                   stderr: exists ? "" : "Could not resolve to a Repository",
-                                   exitCode: exists ? 0 : 1)
+                return ShellResult(
+                    stdout: exists ? "{}" : "",
+                    stderr: exists ? "" : "Could not resolve to a Repository",
+                    exitCode: exists ? 0 : 1)
             }
             return ShellResult(stdout: "", stderr: "", exitCode: 0)
         }
     }
 
     private func root(_ path: String) -> Root {
-        Root(id: "codex", path: path, remote: nil, branch: "main",
-             trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
+        Root(
+            id: "codex", path: path, remote: nil, branch: "main",
+            trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
     }
 
     func testHappyPathPushesToRemote() throws {
@@ -64,7 +69,8 @@ final class OnboarderTests: XCTestCase {
         )
         XCTAssertEqual(onboarder.run(root: root(work.path), branch: "main"), .done)
 
-        let verify = try Shell.run("/usr/bin/git", ["-C", remote.path, "rev-parse", "--verify", "main"])
+        let verify = try Shell.run(
+            "/usr/bin/git", ["-C", remote.path, "rev-parse", "--verify", "main"])
         XCTAssertTrue(verify.ok)
     }
 
@@ -77,8 +83,9 @@ final class OnboarderTests: XCTestCase {
         try Data("token ghp_0123456789abcdefghijklmnopqrstuvwxyz01\n".utf8)
             .write(to: work.appendingPathComponent("AGENTS.md"))
 
-        let onboarder = Onboarder(settings: settings(account: "me"),
-                                  gh: fakeGh(exists: true), confirm: { _ in true })
+        let onboarder = Onboarder(
+            settings: settings(account: "me"),
+            gh: fakeGh(exists: true), confirm: { _ in true })
         guard case .blocked = onboarder.run(root: root(work.path), branch: "main") else {
             return XCTFail("expected blocked")
         }
@@ -91,8 +98,9 @@ final class OnboarderTests: XCTestCase {
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         try Data("agents\n".utf8).write(to: work.appendingPathComponent("AGENTS.md"))
 
-        let onboarder = Onboarder(settings: settings(account: nil),
-                                  gh: fakeGh(exists: false), confirm: { _ in true })
+        let onboarder = Onboarder(
+            settings: settings(account: nil),
+            gh: fakeGh(exists: false), confirm: { _ in true })
         XCTAssertEqual(onboarder.run(root: root(work.path), branch: "main"), .needsAccount)
         XCTAssertTrue(Git(repo: work).isRepo())
     }
@@ -103,8 +111,9 @@ final class OnboarderTests: XCTestCase {
         let work = base.appendingPathComponent("work")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
 
-        let onboarder = Onboarder(settings: settings(account: "me"),
-                                  gh: fakeGh(exists: true), confirm: { _ in false })
+        let onboarder = Onboarder(
+            settings: settings(account: "me"),
+            gh: fakeGh(exists: true), confirm: { _ in false })
         XCTAssertEqual(onboarder.run(root: root(work.path), branch: "main"), .cancelled)
     }
 }

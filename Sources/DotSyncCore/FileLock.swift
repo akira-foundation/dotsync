@@ -1,8 +1,9 @@
 import Foundation
+
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #else
-import Glibc
+    import Glibc
 #endif
 
 public final class FileLock {

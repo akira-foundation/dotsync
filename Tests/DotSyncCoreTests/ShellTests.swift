@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class ShellTests: XCTestCase {

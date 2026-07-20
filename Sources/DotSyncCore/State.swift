@@ -9,8 +9,10 @@ public struct SyncResult: Codable, Equatable {
     public var pendingBefore: Int
     public var message: String
 
-    public init(rootID: String, timestamp: String, pushed: Bool, conflict: Bool,
-                backupBranch: String?, pendingBefore: Int, message: String) {
+    public init(
+        rootID: String, timestamp: String, pushed: Bool, conflict: Bool,
+        backupBranch: String?, pendingBefore: Int, message: String
+    ) {
         self.rootID = rootID
         self.timestamp = timestamp
         self.pushed = pushed

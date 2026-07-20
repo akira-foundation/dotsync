@@ -16,8 +16,10 @@ public struct GhBridge: Sendable {
     public let host: String
     private let run: @Sendable ([String]) throws -> ShellResult
 
-    public init(host: String = "github.com",
-                run: (@Sendable ([String]) throws -> ShellResult)? = nil) {
+    public init(
+        host: String = "github.com",
+        run: (@Sendable ([String]) throws -> ShellResult)? = nil
+    ) {
         self.host = host
         self.run = run ?? { args in try Shell.run(GhBridge.resolveBinary(), args) }
     }

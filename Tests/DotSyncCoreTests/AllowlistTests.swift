@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class AllowlistTests: XCTestCase {
@@ -29,7 +30,10 @@ final class AllowlistTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: dir) }
 
         try Allowlist.write(for: .codex, to: dir)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appendingPathComponent(".gitignore").path))
-        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appendingPathComponent(".gitattributes").path))
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: dir.appendingPathComponent(".gitignore").path))
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: dir.appendingPathComponent(".gitattributes").path))
     }
 }

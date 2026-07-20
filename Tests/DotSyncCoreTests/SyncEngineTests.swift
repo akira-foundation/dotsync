@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class SyncEngineTests: XCTestCase {
@@ -9,8 +10,9 @@ final class SyncEngineTests: XCTestCase {
     }
 
     private func root(_ fx: GitFixture) -> Root {
-        Root(id: "t", path: fx.work.path, remote: "origin", branch: "main",
-             trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
+        Root(
+            id: "t", path: fx.work.path, remote: "origin", branch: "main",
+            trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
     }
 
     private func config() -> Config {
@@ -51,8 +53,9 @@ final class SyncEngineTests: XCTestCase {
 
         let result = try makeEngine().sync(root: root(fx), config: config())
         XCTAssertFalse(result.conflict)
-        XCTAssertTrue(FileManager.default.fileExists(
-            atPath: fx.work.appendingPathComponent("remote.txt").path))
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: fx.work.appendingPathComponent("remote.txt").path))
     }
 
     func testConcurrentSyncSkipsViaLock() throws {
@@ -89,8 +92,9 @@ final class SyncEngineTests: XCTestCase {
             binDir: FileManager.default.temporaryDirectory
                 .appendingPathComponent("cbin-\(UUID().uuidString)"),
             now: { "2026-07-20T11:22:33Z" }, host: { "testpc" })
-        let root = Root(id: "t", path: fx.work.path, remote: "origin", branch: "main",
-                        trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
+        let root = Root(
+            id: "t", path: fx.work.path, remote: "origin", branch: "main",
+            trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
         let cfg = Config(defaults: Defaults(branch: "main", intervalSec: 300), roots: [])
 
         let result = try engine.sync(root: root, config: cfg)
@@ -99,7 +103,8 @@ final class SyncEngineTests: XCTestCase {
         let backupName = try XCTUnwrap(result.backupBranch)
         XCTAssertEqual(backupName, "sync-conflict-testpc-2026-07-20T11-22-33Z")
 
-        let readme = try String(contentsOf: fx.work.appendingPathComponent("README.md"), encoding: .utf8)
+        let readme = try String(
+            contentsOf: fx.work.appendingPathComponent("README.md"), encoding: .utf8)
         XCTAssertEqual(readme, "remote-line\n", "working tree must take remote after fallback")
 
         let g = Git(repo: fx.work)

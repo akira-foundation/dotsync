@@ -19,8 +19,9 @@ public struct SyncEngine {
 
         let lockPath = root.expandedPath.appendingPathComponent(".git/dotsync.lock").path
         guard let lock = FileLock(path: lockPath), lock.tryLock() else {
-            return SyncResult(rootID: root.id, timestamp: ts, pushed: false, conflict: false,
-                              backupBranch: nil, pendingBefore: 0, message: "locked")
+            return SyncResult(
+                rootID: root.id, timestamp: ts, pushed: false, conflict: false,
+                backupBranch: nil, pendingBefore: 0, message: "locked")
         }
         defer { lock.unlock() }
 
@@ -31,7 +32,10 @@ public struct SyncEngine {
         _ = try git.run(["add", "-A"])
         let staged = try git.run(["diff", "--cached", "--quiet"])
         if !staged.ok {
-            _ = try git.run(["commit", "--no-verify", "-m", "chore(auto-sync): \(pending) file(s) [\(ts)] \(host())"])
+            _ = try git.run([
+                "commit", "--no-verify", "-m",
+                "chore(auto-sync): \(pending) file(s) [\(ts)] \(host())",
+            ])
         }
 
         let localTip = try git.run(["rev-parse", "HEAD"]).stdout

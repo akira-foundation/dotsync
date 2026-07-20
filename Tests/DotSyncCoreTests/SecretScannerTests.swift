@@ -1,10 +1,13 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class SecretScannerTests: XCTestCase {
     func testForbiddenTracked() {
-        let tracked = ["CLAUDE.md", ".credentials.json", "auth.json",
-                       "settings.json", "settings.local.json", "skills/x.md"]
+        let tracked = [
+            "CLAUDE.md", ".credentials.json", "auth.json",
+            "settings.json", "settings.local.json", "skills/x.md",
+        ]
         XCTAssertEqual(
             Set(SecretScanner.forbiddenTracked(tracked)),
             Set([".credentials.json", "auth.json", "settings.local.json"])
@@ -12,9 +15,13 @@ final class SecretScannerTests: XCTestCase {
     }
 
     func testScanDetectsTokens() {
-        XCTAssertEqual(SecretScanner.scan(content: "key = sk-abcdefghijklmnopqrstuvwx"), ["api-key"])
-        XCTAssertTrue(SecretScanner.scan(content: "ghp_0123456789abcdefghijklmnopqrstuvwxyz01").contains("github-token"))
-        XCTAssertTrue(SecretScanner.scan(content: "-----BEGIN RSA PRIVATE KEY-----").contains("private-key"))
+        XCTAssertEqual(
+            SecretScanner.scan(content: "key = sk-abcdefghijklmnopqrstuvwx"), ["api-key"])
+        XCTAssertTrue(
+            SecretScanner.scan(content: "ghp_0123456789abcdefghijklmnopqrstuvwxyz01").contains(
+                "github-token"))
+        XCTAssertTrue(
+            SecretScanner.scan(content: "-----BEGIN RSA PRIVATE KEY-----").contains("private-key"))
     }
 
     func testScanCleanContent() {
@@ -31,7 +38,10 @@ final class SecretScannerTests: XCTestCase {
 
         let report = SecretScanner.scanRepo(fx.work)
         XCTAssertFalse(report.isClean)
-        XCTAssertTrue(report.findings.contains(where: { $0.file == "config.toml" && $0.rule == "github-token" }))
+        XCTAssertTrue(
+            report.findings.contains(where: {
+                $0.file == "config.toml" && $0.rule == "github-token"
+            }))
     }
 
     func testScanRepoFlagsForbiddenFile() throws {
