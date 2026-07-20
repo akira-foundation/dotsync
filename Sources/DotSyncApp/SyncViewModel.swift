@@ -126,14 +126,18 @@ final class SyncViewModel: ObservableObject {
         let cfgURL = configURL
         let bin = binDir
         let guards = settings.guards
+        let ignore = Set(settings.guards.allowlistPaths)
         Task.detached {
             if guards.secretScan {
-                let report = SecretScanner.scanRepo(root.expandedPath)
+                let report = SecretScanner.scanRepo(root.expandedPath, ignore: ignore)
                 if guards.blockOnTrackedSecrets, !report.isClean {
                     await MainActor.run {
                         self.busy.remove(id)
                         self.blocked.insert(id)
-                        if announce { SyncViewModel.present(.blocked(report)) }
+                        if announce {
+                            self.presentBlocked(
+                                report, id: id, repoPath: root.expandedPath.path)
+                        }
                         self.refresh()
                     }
                     return
