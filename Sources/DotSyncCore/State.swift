@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SyncResult: Codable, Equatable {
+public struct SyncResult: Codable, Equatable, Sendable {
     public var rootID: String
     public var timestamp: String
     public var pushed: Bool
