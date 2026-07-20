@@ -1,5 +1,5 @@
-import SwiftUI
 import DotSyncCore
+import SwiftUI
 
 struct MenuContent: View {
     @ObservedObject var model: SyncViewModel
@@ -34,10 +34,14 @@ struct MenuContent: View {
                 .padding(.vertical, 16)
         } else {
             ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
-                RootRow(row: row,
-                        busy: model.busy.contains(row.id),
-                        onSync: { model.syncNow(row.id) },
-                        onSetup: { model.onboard(row.id) })
+                RootRow(
+                    row: row,
+                    busy: model.busy.contains(row.id),
+                    blocked: model.blocked.contains(row.id),
+                    onSync: { model.syncNow(row.id) },
+                    onSetup: { model.onboard(row.id) },
+                    onToggleAuto: { model.toggleAuto(row.id) },
+                    onRemove: { model.removeRoot(row.id) })
                 if index < model.rows.count - 1 {
                     Divider().opacity(0.25).padding(.leading, 34)
                 }
@@ -132,8 +136,11 @@ struct MenuContent: View {
 struct RootRow: View {
     let row: RootStatus
     let busy: Bool
+    let blocked: Bool
     let onSync: () -> Void
     let onSetup: () -> Void
+    let onToggleAuto: () -> Void
+    let onRemove: () -> Void
     @SwiftUI.State private var hover = false
 
     var body: some View {
@@ -144,9 +151,15 @@ struct RootRow: View {
                 .shadow(color: dotColor.opacity(0.6), radius: 2)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Text(row.id)
                         .font(.system(.body, design: .rounded).weight(.medium))
+                    if !row.auto {
+                        Image(systemName: "pause.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                            .help("Auto-sync paused")
+                    }
                     Spacer()
                     Text(statusText)
                         .font(.caption2.weight(.medium))
@@ -194,9 +207,14 @@ struct RootRow: View {
         .background(hover ? Color.primary.opacity(0.06) : .clear)
         .contentShape(Rectangle())
         .onHover { hover = $0 }
+        .contextMenu {
+            Button(row.auto ? "Pause auto-sync" : "Resume auto-sync", action: onToggleAuto)
+            Button("Remove", role: .destructive, action: onRemove)
+        }
     }
 
     private var statusText: String {
+        if blocked { return "secrets blocked" }
         switch row.setup {
         case .needsGit: return "not a repo"
         case .needsRemote: return "no remote"
@@ -211,6 +229,7 @@ struct RootRow: View {
     }
 
     private var statusColor: Color {
+        if blocked { return .red }
         if row.setup != .ready { return .blue }
         if row.conflict { return .orange }
         if row.pending > 0 || row.ahead > 0 || row.behind > 0 { return .yellow }

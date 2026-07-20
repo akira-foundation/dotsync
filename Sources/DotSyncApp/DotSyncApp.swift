@@ -1,5 +1,5 @@
-import SwiftUI
 import DotSyncCore
+import SwiftUI
 
 @main
 struct DotSyncApp: App {

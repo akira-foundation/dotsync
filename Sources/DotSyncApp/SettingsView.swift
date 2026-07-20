@@ -1,5 +1,5 @@
-import SwiftUI
 import DotSyncCore
+import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var model: SyncViewModel
@@ -41,6 +41,8 @@ struct SettingsView: View {
                     intervalPicker
                 }
                 .font(.caption)
+                Toggle("Sync on file change", isOn: watchBinding)
+                    .font(.callout)
                 Toggle("Launch at login", isOn: launchAtLoginBinding)
                     .font(.callout)
             }
@@ -77,21 +79,31 @@ struct SettingsView: View {
     private var repoTemplateBinding: Binding<String> {
         Binding(
             get: { model.settings.github.repoNameTemplate },
-            set: { model.settings.github.repoNameTemplate = $0; model.saveSettings() }
+            set: {
+                model.settings.github.repoNameTemplate = $0
+                model.saveSettings()
+            }
         )
     }
 
     private var autoAddBinding: Binding<Bool> {
         Binding(
             get: { model.settings.discovery.autoAdd },
-            set: { model.settings.discovery.autoAdd = $0; model.saveSettings() }
+            set: {
+                model.settings.discovery.autoAdd = $0
+                model.saveSettings()
+            }
         )
     }
 
     private var autoSyncBinding: Binding<Bool> {
         Binding(
             get: { model.settings.autosync.enabled },
-            set: { model.settings.autosync.enabled = $0; model.saveSettings(); model.applyAutoSync() }
+            set: {
+                model.settings.autosync.enabled = $0
+                model.saveSettings()
+                model.applyAutoSync()
+            }
         )
     }
 
@@ -99,6 +111,17 @@ struct SettingsView: View {
         Binding(
             get: { model.settings.launchAtLogin },
             set: { model.setLaunchAtLogin($0) }
+        )
+    }
+
+    private var watchBinding: Binding<Bool> {
+        Binding(
+            get: { model.settings.autosync.watch },
+            set: {
+                model.settings.autosync.watch = $0
+                model.saveSettings()
+                model.applyWatch()
+            }
         )
     }
 
