@@ -26,7 +26,7 @@ public enum SecretScanner {
         ("github-token", "gh[pousr]_[A-Za-z0-9]{36,}"),
         ("slack-token", "xox[baprs]-[A-Za-z0-9-]{10,}"),
         ("aws-access-key", "AKIA[0-9A-Z]{16}"),
-        ("private-key", "-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+        ("private-key", "-----BEGIN [A-Z ]*PRIVATE KEY-----[^A-Za-z0-9]{0,4}[A-Za-z0-9+/]{40,}"),
     ]
 
     public static func forbiddenTracked(_ paths: [String]) -> [String] {
@@ -51,7 +51,7 @@ public enum SecretScanner {
         }
     }
 
-    public static func scanRepo(_ repo: URL) -> SecretScanReport {
+    public static func scanRepo(_ repo: URL, ignore: Set<String> = []) -> SecretScanReport {
         let git = Git(repo: repo)
         let tracked =
             (try? git.run(["ls-files"]).stdout
@@ -59,7 +59,7 @@ public enum SecretScanner {
                 .map(String.init)) ?? []
 
         var files: [(name: String, content: String)] = []
-        for relative in tracked {
+        for relative in tracked where !ignore.contains(relative) {
             let url = repo.appendingPathComponent(relative)
             guard let data = try? Data(contentsOf: url), data.count < 1_000_000,
                 let text = String(data: data, encoding: .utf8)

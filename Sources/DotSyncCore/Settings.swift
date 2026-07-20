@@ -62,14 +62,29 @@ public struct GuardSettings: Codable, Equatable, Sendable {
     public var requirePrivate: Bool
     public var secretScan: Bool
     public var blockOnTrackedSecrets: Bool
+    public var allowlistPaths: [String]
 
     public init(
         requirePrivate: Bool = true, secretScan: Bool = true,
-        blockOnTrackedSecrets: Bool = true
+        blockOnTrackedSecrets: Bool = true, allowlistPaths: [String] = []
     ) {
         self.requirePrivate = requirePrivate
         self.secretScan = secretScan
         self.blockOnTrackedSecrets = blockOnTrackedSecrets
+        self.allowlistPaths = allowlistPaths
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case requirePrivate, secretScan, blockOnTrackedSecrets, allowlistPaths
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        requirePrivate = try container.decodeIfPresent(Bool.self, forKey: .requirePrivate) ?? true
+        secretScan = try container.decodeIfPresent(Bool.self, forKey: .secretScan) ?? true
+        blockOnTrackedSecrets =
+            try container.decodeIfPresent(Bool.self, forKey: .blockOnTrackedSecrets) ?? true
+        allowlistPaths = try container.decodeIfPresent([String].self, forKey: .allowlistPaths) ?? []
     }
 }
 
