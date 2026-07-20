@@ -16,12 +16,21 @@ public enum Tool: String, Sendable {
 
 public enum Allowlist {
     public static func gitignore(for tool: Tool) -> String {
+        let base: String
         switch tool {
-        case .claude: return claude
-        case .codex: return codex
-        case .generic: return generic
+        case .claude: base = claude
+        case .codex: base = codex
+        case .generic: base = generic
         }
+        return base + encryptionTrailer
     }
+
+    static let encryptionTrailer = """
+        !/.dotsync-age/
+        !/.dotsync-age/**
+        !*.age
+
+        """
 
     public static let gitattributes = """
         *.md merge=union

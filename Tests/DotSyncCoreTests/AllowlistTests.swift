@@ -16,6 +16,14 @@ final class AllowlistTests: XCTestCase {
         XCTAssertTrue(gitignore.contains("!/AGENTS.md"))
     }
 
+    func testAllowsAgeBlobsAndRecipients() {
+        for tool in [Tool.claude, .codex, .generic] {
+            let gitignore = Allowlist.gitignore(for: tool)
+            XCTAssertTrue(gitignore.contains("!*.age"))
+            XCTAssertTrue(gitignore.contains("!/.dotsync-age/"))
+        }
+    }
+
     func testClaudeIgnoresCredentials() {
         let gitignore = Allowlist.gitignore(for: .claude)
         XCTAssertTrue(gitignore.contains(".credentials.json"))
