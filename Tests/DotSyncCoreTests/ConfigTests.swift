@@ -1,18 +1,19 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class ConfigTests: XCTestCase {
     func testDecodesRootsAndAppliesDefaults() throws {
         let json = """
-        {
-          "defaults": { "branch": "main", "intervalSec": 300 },
-          "roots": [
-            { "id": "claude", "path": "~/.claude", "trigger": "hook", "auto": true },
-            { "id": "codex", "path": "~/.codex", "trigger": "scheduler",
-              "branch": "master", "remote": "upstream", "intervalSec": 600, "watch": true }
-          ]
-        }
-        """
+            {
+              "defaults": { "branch": "main", "intervalSec": 300 },
+              "roots": [
+                { "id": "claude", "path": "~/.claude", "trigger": "hook", "auto": true },
+                { "id": "codex", "path": "~/.codex", "trigger": "scheduler",
+                  "branch": "master", "remote": "upstream", "intervalSec": 600, "watch": true }
+              ]
+            }
+            """
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("cfg-\(UUID().uuidString).json")
         try Data(json.utf8).write(to: url)
@@ -34,6 +35,27 @@ final class ConfigTests: XCTestCase {
         XCTAssertFalse(codex.expandedPath.path.contains("~"))
     }
 
+    private func root(_ id: String, auto: Bool = true) -> Root {
+        Root(
+            id: id, path: "~/\(id)", remote: "origin", branch: nil,
+            trigger: .scheduler, auto: auto, intervalSec: nil, watch: nil)
+    }
+
+    func testRemovingRoot() {
+        let cfg = Config(
+            defaults: Defaults(branch: "main", intervalSec: 300),
+            roots: [root("a"), root("b")])
+        XCTAssertEqual(cfg.removingRoot(id: "a").roots.map(\.id), ["b"])
+        XCTAssertEqual(cfg.removingRoot(id: "missing").roots.count, 2)
+    }
+
+    func testSettingAuto() {
+        let cfg = Config(
+            defaults: Defaults(branch: "main", intervalSec: 300),
+            roots: [root("a", auto: true)])
+        XCTAssertEqual(cfg.settingAuto(id: "a", false).root(id: "a")?.auto, false)
+    }
+
     func testSaveRoundTrip() throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("dotsync-\(UUID().uuidString)/config.json")
@@ -41,8 +63,11 @@ final class ConfigTests: XCTestCase {
 
         let cfg = Config(
             defaults: Defaults(branch: "main", intervalSec: 300),
-            roots: [Root(id: "a", path: "~/a", remote: "origin", branch: nil,
-                         trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)]
+            roots: [
+                Root(
+                    id: "a", path: "~/a", remote: "origin", branch: nil,
+                    trigger: .scheduler, auto: true, intervalSec: nil, watch: nil)
+            ]
         )
         try cfg.save(to: url)
 

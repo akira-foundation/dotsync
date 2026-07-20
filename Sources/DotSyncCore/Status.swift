@@ -12,6 +12,7 @@ public struct RootStatus: Identifiable, Equatable, Sendable {
     public var remote: String?
     public var branch: String
     public var setup: SetupState
+    public var auto: Bool
     public var pending: Int
     public var ahead: Int
     public var behind: Int
@@ -20,15 +21,18 @@ public struct RootStatus: Identifiable, Equatable, Sendable {
     public var conflict: Bool
     public var backupBranch: String?
 
-    public init(id: String, path: String, remote: String?, branch: String,
-                setup: SetupState, pending: Int, ahead: Int, behind: Int,
-                lastMessage: String?, lastTimestamp: String?, conflict: Bool,
-                backupBranch: String?) {
+    public init(
+        id: String, path: String, remote: String?, branch: String,
+        setup: SetupState, auto: Bool, pending: Int, ahead: Int, behind: Int,
+        lastMessage: String?, lastTimestamp: String?, conflict: Bool,
+        backupBranch: String?
+    ) {
         self.id = id
         self.path = path
         self.remote = remote
         self.branch = branch
         self.setup = setup
+        self.auto = auto
         self.pending = pending
         self.ahead = ahead
         self.behind = behind
@@ -43,8 +47,10 @@ public enum Status {
     public static func read(root: Root, config: Config) -> RootStatus {
         let git = Git(repo: root.expandedPath)
         let pending = (try? git.pending().count) ?? 0
-        let ab = (try? git.aheadBehind(remote: config.remote(for: root),
-                                       branch: config.branch(for: root))) ?? (ahead: 0, behind: 0)
+        let ab =
+            (try? git.aheadBehind(
+                remote: config.remote(for: root),
+                branch: config.branch(for: root))) ?? (ahead: 0, behind: 0)
         let state = try? State.read(for: root)
         let isRepo = git.isRepo()
         let remoteURL = isRepo ? git.remoteURL(config.remote(for: root)) : nil
@@ -55,6 +61,7 @@ public enum Status {
             remote: remoteURL,
             branch: config.branch(for: root),
             setup: setup,
+            auto: root.auto ?? true,
             pending: pending,
             ahead: ab.ahead,
             behind: ab.behind,

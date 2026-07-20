@@ -22,8 +22,10 @@ public struct Root: Codable, Equatable, Sendable {
     public var intervalSec: Int?
     public var watch: Bool?
 
-    public init(id: String, path: String, remote: String?, branch: String?,
-                trigger: Trigger, auto: Bool?, intervalSec: Int?, watch: Bool?) {
+    public init(
+        id: String, path: String, remote: String?, branch: String?,
+        trigger: Trigger, auto: Bool?, intervalSec: Int?, watch: Bool?
+    ) {
         self.id = id
         self.path = path
         self.remote = remote
@@ -49,6 +51,21 @@ public struct Config: Codable, Equatable, Sendable {
     }
 
     public func root(id: String) -> Root? { roots.first { $0.id == id } }
+
+    public func removingRoot(id: String) -> Config {
+        Config(defaults: defaults, roots: roots.filter { $0.id != id })
+    }
+
+    public func settingAuto(id: String, _ auto: Bool) -> Config {
+        Config(
+            defaults: defaults,
+            roots: roots.map { root in
+                guard root.id == id else { return root }
+                var updated = root
+                updated.auto = auto
+                return updated
+            })
+    }
     public func branch(for r: Root) -> String { r.branch ?? defaults.branch }
     public func remote(for r: Root) -> String { r.remote ?? "origin" }
 

@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import DotSyncCore
 
 final class SettingsTests: XCTestCase {
@@ -44,11 +45,25 @@ final class SettingsTests: XCTestCase {
         XCTAssertFalse(settings.launchAtLogin)
     }
 
+    func testDecodesAutosyncWithoutWatch() throws {
+        let json = """
+            { "autosync": { "enabled": true, "intervalSec": 60 } }
+            """
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dotsync-\(UUID().uuidString).json")
+        try Data(json.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let settings = try Settings.load(url)
+        XCTAssertEqual(settings.autosync.intervalSec, 60)
+        XCTAssertFalse(settings.autosync.watch)
+    }
+
     func testDecodesLegacyFileWithoutAutosync() throws {
         let json = """
-        { "github": { "host": "github.com", "visibility": "private",
-          "repoNameTemplate": "dotsync-{id}", "autoCreateRemote": false } }
-        """
+            { "github": { "host": "github.com", "visibility": "private",
+              "repoNameTemplate": "dotsync-{id}", "autoCreateRemote": false } }
+            """
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("dotsync-\(UUID().uuidString).json")
         try Data(json.utf8).write(to: url)
