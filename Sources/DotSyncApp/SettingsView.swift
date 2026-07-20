@@ -59,6 +59,9 @@ struct SettingsView: View {
 
     private var accountPicker: some View {
         Menu {
+            if model.ghAccounts.isEmpty {
+                Text("Run `gh auth login` first").font(.caption)
+            }
             ForEach(model.ghAccounts, id: \.login) { account in
                 Button {
                     model.settings.github.account = account.login
@@ -69,11 +72,16 @@ struct SettingsView: View {
                 }
             }
         } label: {
-            Text(model.settings.github.account ?? "Select\u{2026}")
+            Text(model.settings.github.account ?? accountPlaceholder)
                 .font(.caption.weight(.medium))
+                .foregroundStyle(model.settings.github.account == nil ? .secondary : .primary)
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
+    }
+
+    private var accountPlaceholder: String {
+        model.ghAccounts.isEmpty ? "gh not logged in" : "Select\u{2026}"
     }
 
     private var repoTemplateBinding: Binding<String> {

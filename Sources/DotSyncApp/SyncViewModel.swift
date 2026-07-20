@@ -32,6 +32,7 @@ final class SyncViewModel: ObservableObject {
             env["DOTSYNC_SETTINGS"].map(URL.init(fileURLWithPath:))
             ?? home.appendingPathComponent(".dotsync/settings.json")
         settings = (try? Settings.load(settingsURL)) ?? Settings()
+        Notifier.requestAuthorization()
         discover()
         applyAutoSync()
         applyWatch()
@@ -137,6 +138,10 @@ final class SyncViewModel: ObservableObject {
                         if announce {
                             self.presentBlocked(
                                 report, id: id, repoPath: root.expandedPath.path)
+                        } else {
+                            Notifier.post(
+                                title: "dotsync blocked",
+                                body: "\(id): secrets detected, sync paused.")
                         }
                         self.refresh()
                     }
@@ -151,12 +156,20 @@ final class SyncViewModel: ObservableObject {
                         ?? "pc"
                 }
             )
+            var result: SyncResult?
             if let config = try? Config.load(cfgURL), let root = config.root(id: id) {
-                _ = try? engine.sync(root: root, config: config)
+                result = try? engine.sync(root: root, config: config)
             }
             await MainActor.run {
                 self.busy.remove(id)
                 self.blocked.remove(id)
+                if let result, result.conflict {
+                    Notifier.post(
+                        title: "dotsync conflict",
+                        body: "\(id): remote kept, your changes saved. Open to resolve.")
+                } else if let result, !result.pushed, result.message == "push-failed" {
+                    Notifier.post(title: "dotsync sync failed", body: "\(id): push failed.")
+                }
                 self.refresh()
             }
         }
@@ -188,7 +201,7 @@ final class SyncViewModel: ObservableObject {
             (try? Config.load(configURL))
             ?? Config(defaults: Defaults(branch: "main", intervalSec: 300), roots: [])
         var changed = false
-        for raw in settings.discovery.paths {
+        for raw in Discovery.candidatePaths(settings.discovery.paths) {
             let expanded = (raw as NSString).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expanded) else { continue }
             guard !config.roots.contains(where: { $0.expandedPath.path == expanded }) else {

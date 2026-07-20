@@ -22,16 +22,26 @@ struct MenuContent: View {
             footer
         }
         .frame(width: 320)
+        .animation(.easeInOut(duration: 0.2), value: model.rows)
+        .animation(.easeInOut(duration: 0.2), value: model.busy)
         .onAppear { model.discover() }
     }
 
     @ViewBuilder private var folderList: some View {
         if model.rows.isEmpty {
-            Text("No folders yet")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.vertical, 16)
+            VStack(spacing: 6) {
+                Image(systemName: "tray")
+                    .font(.system(size: 22))
+                    .foregroundStyle(.tertiary)
+                Text("No folders yet")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Text("Add a folder below to start syncing")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
         } else {
             ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
                 RootRow(
@@ -41,6 +51,11 @@ struct MenuContent: View {
                     onSync: { model.syncNow(row.id) },
                     onSetup: { model.onboard(row.id) },
                     onResolve: { model.resolveConflict(row.id) },
+                    onReveal: {
+                        NSWorkspace.shared.activateFileViewerSelecting([
+                            URL(fileURLWithPath: row.path)
+                        ])
+                    },
                     onToggleAuto: { model.toggleAuto(row.id) },
                     onRemove: { model.removeRoot(row.id) })
                 if index < model.rows.count - 1 {
@@ -129,6 +144,7 @@ struct RootRow: View {
     let onSync: () -> Void
     let onSetup: () -> Void
     let onResolve: () -> Void
+    let onReveal: () -> Void
     let onToggleAuto: () -> Void
     let onRemove: () -> Void
     @SwiftUI.State private var hover = false
@@ -202,10 +218,11 @@ struct RootRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .background(hover ? Color.primary.opacity(0.06) : .clear)
+        .background(rowBackground)
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .contextMenu {
+            Button("Reveal in Finder", action: onReveal)
             Button(row.auto ? "Pause auto-sync" : "Resume auto-sync", action: onToggleAuto)
             Button("Remove", role: .destructive, action: onRemove)
         }
@@ -235,6 +252,13 @@ struct RootRow: View {
     }
 
     private var dotColor: Color { statusColor }
+
+    private var rowBackground: Color {
+        if blocked { return Color.red.opacity(0.09) }
+        if row.conflict { return Color.orange.opacity(0.09) }
+        if row.setup != .ready { return Color.blue.opacity(0.07) }
+        return hover ? Color.primary.opacity(0.06) : .clear
+    }
 
     private var pathDisplay: String {
         (row.path as NSString).abbreviatingWithTildeInPath
