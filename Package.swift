@@ -4,6 +4,9 @@ import PackageDescription
 let package = Package(
     name: "dotsync",
     platforms: [.macOS(.v26)],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
+    ],
     targets: [
         .target(
             name: "DotSyncCore",
@@ -15,7 +18,13 @@ let package = Package(
         ),
         .executableTarget(
             name: "DotSyncApp",
-            dependencies: ["DotSyncCore"]
+            dependencies: [
+                "DotSyncCore",
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])
+            ]
         ),
         .testTarget(
             name: "DotSyncCoreTests",

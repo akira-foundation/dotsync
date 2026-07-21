@@ -4,6 +4,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var model: SyncViewModel
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -79,6 +80,22 @@ struct SettingsView: View {
             section("Safety") {
                 badge("Block on tracked secrets", "exclamationmark.shield.fill", .orange)
                 badge("Ask before creating remote", "hand.raised.fill", .blue)
+            }
+
+            section("About") {
+                HStack {
+                    Text("Version").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(appVersion).foregroundStyle(.primary)
+                }
+                .font(.caption)
+                Button {
+                    updater.checkForUpdates()
+                } label: {
+                    Label("Check for updates\u{2026}", systemImage: "arrow.down.circle")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 14)
@@ -156,6 +173,10 @@ struct SettingsView: View {
             get: { model.settings.encryption.enabled },
             set: { $0 ? model.enableEncryption() : model.disableEncryption() }
         )
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
     }
 
     private func copyToClipboard(_ text: String) {
