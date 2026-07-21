@@ -33,6 +33,14 @@ public struct Git {
             .map(String.init)
     }
 
+    public func pendingPaths() -> [String] {
+        ((try? pending()) ?? []).compactMap { line in
+            guard line.count > 3 else { return nil }
+            let path = String(line.dropFirst(3))
+            return path.components(separatedBy: " -> ").last
+        }
+    }
+
     public func aheadBehind(remote: String, branch: String) throws -> (ahead: Int, behind: Int) {
         let r = try run(["rev-list", "--left-right", "--count", "\(remote)/\(branch)...HEAD"])
         let nums = r.stdout
