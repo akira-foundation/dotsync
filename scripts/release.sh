@@ -14,7 +14,7 @@ SPARKLE_BIN=.build/artifacts/sparkle/Sparkle/bin
 : "${APPLE_APP_PASSWORD:?}"
 : "${SPARKLE_PUBLIC_ED_KEY:?}"
 : "${SPARKLE_ED_PRIVATE_KEY_FILE:?path to exported EdDSA private key}"
-: "${DOWNLOAD_URL_PREFIX:?public URL prefix for the dmg, e.g. https://github.com/<owner>/dotsync-releases/releases/download/v${VERSION}/}"
+: "${DOWNLOAD_URL_PREFIX:?public URL prefix for the dmg, e.g. https://github.com/<owner>/<repo>/releases/download/v${VERSION}/}"
 
 echo "==> bundle"
 bash scripts/bundle.sh

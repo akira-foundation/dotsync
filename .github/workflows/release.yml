@@ -5,7 +5,7 @@ on:
     tags: ["v*.*.*"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   release:
@@ -51,22 +51,19 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           SPARKLE_PUBLIC_ED_KEY: ${{ vars.SPARKLE_PUBLIC_ED_KEY }}
           SPARKLE_ED_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle_ed_private.key
-          DOWNLOAD_URL_PREFIX: https://github.com/${{ github.repository_owner }}/dotsync-releases/releases/download/${{ github.ref_name }}/
+          DOWNLOAD_URL_PREFIX: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/
         run: bash scripts/release.sh "${{ steps.v.outputs.version }}"
 
-      - name: Publish to public releases repo
+      - name: Publish release and appcast
         env:
-          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" dist/*.dmg \
-            --repo "$OWNER/dotsync-releases" --title "$TAG" --notes "dotsync $TAG"
-          git clone "https://x-access-token:$GH_TOKEN@github.com/$OWNER/dotsync-releases.git" pub
-          cp dist/appcast.xml pub/appcast.xml
-          cd pub
+          gh release create "$TAG" dist/*.dmg --title "$TAG" --notes "dotsync $TAG"
           git config user.name "dotsync-ci"
-          git config user.email "ci@dotsync"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout main
+          cp dist/appcast.xml appcast.xml
           git add appcast.xml
           git commit -m "chore(release): appcast for $TAG" || echo "no appcast change"
-          git push
+          git push origin main

@@ -30,7 +30,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>LSUIElement</key><true/>
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>LSRequiresNativeExecution</key><true/>
-  <key>SUFeedURL</key><string>https://raw.githubusercontent.com/akira-foundation/dotsync-releases/main/appcast.xml</string>
+  <key>SUFeedURL</key><string>https://raw.githubusercontent.com/akira-foundation/dotsync/main/appcast.xml</string>
   <key>SUPublicEDKey</key><string>__SPARKLE_PUBLIC_ED_KEY__</string>
   <key>SUEnableAutomaticChecks</key><true/>
   <key>SUScheduledCheckInterval</key><integer>86400</integer>
