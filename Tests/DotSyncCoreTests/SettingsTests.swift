@@ -38,6 +38,12 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(settings.repoName(for: "claude"), "dotsync-claude")
     }
 
+    func testEncryptionDefaults() {
+        let settings = Settings()
+        XCTAssertFalse(settings.encryption.enabled)
+        XCTAssertNil(settings.encryption.recipient)
+    }
+
     func testAutoSyncDefaults() {
         let settings = Settings()
         XCTAssertTrue(settings.autosync.enabled)

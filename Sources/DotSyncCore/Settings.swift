@@ -88,11 +88,35 @@ public struct GuardSettings: Codable, Equatable, Sendable {
     }
 }
 
+public struct EncryptionSettings: Codable, Equatable, Sendable {
+    public var enabled: Bool
+    public var host: String
+    public var recipient: String?
+
+    public init(enabled: Bool = false, host: String = "", recipient: String? = nil) {
+        self.enabled = enabled
+        self.host = host
+        self.recipient = recipient
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case enabled, host, recipient
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? false
+        host = try container.decodeIfPresent(String.self, forKey: .host) ?? ""
+        recipient = try container.decodeIfPresent(String.self, forKey: .recipient)
+    }
+}
+
 public struct Settings: Codable, Equatable, Sendable {
     public var github: GitHubSettings
     public var discovery: DiscoverySettings
     public var guards: GuardSettings
     public var autosync: AutoSyncSettings
+    public var encryption: EncryptionSettings
     public var launchAtLogin: Bool
 
     public init(
@@ -100,17 +124,19 @@ public struct Settings: Codable, Equatable, Sendable {
         discovery: DiscoverySettings = DiscoverySettings(),
         guards: GuardSettings = GuardSettings(),
         autosync: AutoSyncSettings = AutoSyncSettings(),
+        encryption: EncryptionSettings = EncryptionSettings(),
         launchAtLogin: Bool = false
     ) {
         self.github = github
         self.discovery = discovery
         self.guards = guards
         self.autosync = autosync
+        self.encryption = encryption
         self.launchAtLogin = launchAtLogin
     }
 
     private enum CodingKeys: String, CodingKey {
-        case github, discovery, guards, autosync, launchAtLogin
+        case github, discovery, guards, autosync, encryption, launchAtLogin
     }
 
     public init(from decoder: Decoder) throws {
@@ -125,6 +151,9 @@ public struct Settings: Codable, Equatable, Sendable {
         autosync =
             try container.decodeIfPresent(AutoSyncSettings.self, forKey: .autosync)
             ?? AutoSyncSettings()
+        encryption =
+            try container.decodeIfPresent(EncryptionSettings.self, forKey: .encryption)
+            ?? EncryptionSettings()
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
     }
 
