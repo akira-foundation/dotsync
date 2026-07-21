@@ -60,6 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 styleMask: [.titled, .closable, .resizable, .miniaturizable],
                 backing: .buffered, defer: false)
             window.title = "dotsync logs"
+            window.toolbarStyle = .unified
             window.contentViewController = NSHostingController(rootView: LogViewerView())
             window.isReleasedWhenClosed = false
             window.center()
