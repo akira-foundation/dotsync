@@ -7,10 +7,25 @@ extension SyncViewModel {
     }
 
     func enableEncryption() {
-        guard AgeCrypto.available else {
-            presentAgeMissing()
+        guard !AgeCrypto.available else {
+            finishEnableEncryption()
             return
         }
+        installingAge = true
+        Task.detached {
+            let installed = SyncViewModel.brewInstallAge()
+            await MainActor.run {
+                self.installingAge = false
+                if installed, AgeCrypto.available {
+                    self.finishEnableEncryption()
+                } else {
+                    self.presentAgeMissing()
+                }
+            }
+        }
+    }
+
+    private func finishEnableEncryption() {
         let recipient: String
         if let existing = settings.encryption.recipient, Keychain.identity() != nil {
             recipient = existing
@@ -25,6 +40,14 @@ extension SyncViewModel {
         saveSettings()
         registerRecipientInAllRoots(recipient)
         refresh()
+    }
+
+    nonisolated static func brewInstallAge() -> Bool {
+        let candidates = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
+        guard
+            let brew = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) })
+        else { return false }
+        return (try? Shell.run(brew, ["install", "age"]))?.ok ?? false
     }
 
     func disableEncryption() {
@@ -48,7 +71,8 @@ extension SyncViewModel {
     private func presentAgeMissing() {
         let alert = NSAlert()
         alert.messageText = "age is required"
-        alert.informativeText = "Install it with `brew install age`, then enable encryption."
+        alert.informativeText =
+            "Could not install age automatically. Install Homebrew, then run `brew install age`."
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
@@ -60,12 +84,15 @@ extension SyncViewModel {
         guard encryption.enabled, AgeCrypto.available, let recipient = encryption.recipient else {
             return
         }
-        let now = ISO8601DateFormatter().string(from: Date())
         let existing = Recipients.load(repo).first { $0.host == host }
-        try? Recipients.upsert(
-            Recipient(
-                host: host, publicKey: recipient, created: existing?.created ?? now, lastSeen: now),
-            in: repo)
+        if existing == nil || existing?.publicKey != recipient {
+            let now = ISO8601DateFormatter().string(from: Date())
+            try? Recipients.upsert(
+                Recipient(
+                    host: host, publicKey: recipient, created: existing?.created ?? now,
+                    lastSeen: now),
+                in: repo)
+        }
         try? EncryptionCoordinator.encryptAll(
             repo: repo, age: AgeCrypto(), recipients: Recipients.publicKeys(repo))
     }

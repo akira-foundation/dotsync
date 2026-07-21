@@ -49,8 +49,15 @@ struct SettingsView: View {
             }
 
             section("Encryption") {
-                Toggle("Encrypt secrets", isOn: encryptBinding)
-                    .font(.callout)
+                if model.installingAge {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.small)
+                        Text("Installing age\u{2026}").font(.callout).foregroundStyle(.secondary)
+                    }
+                } else {
+                    Toggle("Encrypt secrets", isOn: encryptBinding)
+                        .font(.callout)
+                }
                 if let recipient = model.settings.encryption.recipient {
                     HStack {
                         Text("This Mac").foregroundStyle(.secondary)

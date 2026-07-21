@@ -8,6 +8,7 @@ final class SyncViewModel: ObservableObject {
     @Published var rows: [RootStatus] = []
     @Published var busy: Set<String> = []
     @Published var blocked: Set<String> = []
+    @Published var installingAge = false
     @Published var settings = Settings()
     @Published var ghAccounts: [GhAccount] = []
 
@@ -15,6 +16,7 @@ final class SyncViewModel: ObservableObject {
     private let binDir: URL
     private let settingsURL: URL
     private var autoSyncTimer: Timer?
+    private var watchCooldownUntil = Date(timeIntervalSince1970: 0)
     private lazy var watcher = FileWatcher { [weak self] paths in
         Task { @MainActor in self?.handleWatchEvents(paths) }
     }
@@ -69,13 +71,22 @@ final class SyncViewModel: ObservableObject {
     }
 
     private func handleWatchEvents(_ paths: Set<String>) {
-        let relevant = paths.filter { !$0.contains("/.git/") }
+        guard busy.isEmpty, Date() >= watchCooldownUntil else { return }
+        let relevant = paths.filter { path in
+            !path.contains("/.git/") && !path.contains("/.dotsync-age/") && !path.hasSuffix(".age")
+        }
         guard !relevant.isEmpty else { return }
+
+        var triggered = false
         for row in rows where row.setup == .ready && row.auto && !busy.contains(row.id) {
-            if relevant.contains(where: { $0.hasPrefix(row.path) }) {
+            guard relevant.contains(where: { $0.hasPrefix(row.path) }) else { continue }
+            let pending = (try? Git(repo: URL(fileURLWithPath: row.path)).pending()) ?? []
+            if !pending.isEmpty {
                 syncNow(row.id, announce: false)
+                triggered = true
             }
         }
+        if triggered { watchCooldownUntil = Date().addingTimeInterval(3) }
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -185,7 +196,24 @@ final class SyncViewModel: ObservableObject {
     }
 
     func removeRoot(_ id: String) {
-        guard let config = try? Config.load(configURL) else { return }
+        guard let config = try? Config.load(configURL), let root = config.root(id: id) else {
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Remove \(id)?"
+        alert.informativeText =
+            "dotsync stops syncing this folder. The folder and its git repo stay on disk."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+        alert.buttons.first?.hasDestructiveAction = true
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        if !settings.discovery.ignored.contains(root.expandedPath.path) {
+            settings.discovery.ignored.append(root.expandedPath.path)
+            saveSettings()
+        }
         try? config.removingRoot(id: id).save(to: configURL)
         blocked.remove(id)
         refresh()
@@ -206,9 +234,11 @@ final class SyncViewModel: ObservableObject {
             (try? Config.load(configURL))
             ?? Config(defaults: Defaults(branch: "main", intervalSec: 300), roots: [])
         var changed = false
+        let ignored = Set(settings.discovery.ignored)
         for raw in Discovery.candidatePaths(settings.discovery.paths) {
             let expanded = (raw as NSString).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expanded) else { continue }
+            guard !ignored.contains(expanded) else { continue }
             guard !config.roots.contains(where: { $0.expandedPath.path == expanded }) else {
                 continue
             }

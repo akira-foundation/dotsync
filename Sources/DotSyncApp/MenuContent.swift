@@ -222,9 +222,26 @@ struct RootRow: View {
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .contextMenu {
-            Button("Reveal in Finder", action: onReveal)
-            Button(row.auto ? "Pause auto-sync" : "Resume auto-sync", action: onToggleAuto)
-            Button("Remove", role: .destructive, action: onRemove)
+            if let remote = row.remote, let url = URL(string: "https://" + shortRepo(remote)) {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("Open on GitHub", systemImage: "arrow.up.right.square")
+                }
+            }
+            Button(action: onReveal) {
+                Label("Reveal in Finder", systemImage: "folder")
+            }
+            if row.setup == .ready {
+                Button(action: onToggleAuto) {
+                    Label(
+                        row.auto ? "Pause auto-sync" : "Resume auto-sync",
+                        systemImage: row.auto ? "pause.circle" : "play.circle")
+                }
+            }
+            Button(role: .destructive, action: onRemove) {
+                Label("Remove", systemImage: "trash")
+            }
         }
     }
 
