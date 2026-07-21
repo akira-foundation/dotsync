@@ -46,6 +46,28 @@ final class EncryptionCoordinatorTests: XCTestCase {
         XCTAssertEqual(EncryptionCoordinator.ageFiles(in: repo), ["auth.json.age"])
     }
 
+    func testNeedsEncryptionByModificationTime() throws {
+        let repo = tempRepo()
+        defer { try? FileManager.default.removeItem(at: repo) }
+        try write(repo, "auth.json")
+        let input = repo.appendingPathComponent("auth.json")
+        let output = repo.appendingPathComponent("auth.json.age")
+
+        XCTAssertTrue(EncryptionCoordinator.needsEncryption(input: input, output: output))
+
+        try write(repo, "auth.json.age", "blob")
+        let base = Date(timeIntervalSince1970: 1_000_000)
+        try FileManager.default.setAttributes(
+            [.modificationDate: base], ofItemAtPath: input.path)
+        try FileManager.default.setAttributes(
+            [.modificationDate: base.addingTimeInterval(10)], ofItemAtPath: output.path)
+        XCTAssertFalse(EncryptionCoordinator.needsEncryption(input: input, output: output))
+
+        try FileManager.default.setAttributes(
+            [.modificationDate: base.addingTimeInterval(20)], ofItemAtPath: input.path)
+        XCTAssertTrue(EncryptionCoordinator.needsEncryption(input: input, output: output))
+    }
+
     func testEncryptDecryptRoundTrip() throws {
         try XCTSkipUnless(AgeCrypto.available, "age not installed")
         let repo = tempRepo()

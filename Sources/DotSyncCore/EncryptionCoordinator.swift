@@ -18,20 +18,33 @@ public enum EncryptionCoordinator {
 
     public static func encryptAll(repo: URL, age: AgeCrypto, recipients: [String]) throws {
         for relative in sensitiveFiles(in: repo) {
-            try age.encrypt(
-                input: repo.appendingPathComponent(relative),
-                recipients: recipients,
-                output: repo.appendingPathComponent(relative + ".age"))
+            let input = repo.appendingPathComponent(relative)
+            let output = repo.appendingPathComponent(relative + ".age")
+            guard needsEncryption(input: input, output: output) else { continue }
+            try age.encrypt(input: input, recipients: recipients, output: output)
         }
     }
 
     public static func decryptAll(repo: URL, age: AgeCrypto, identity: String) throws {
         for relative in ageFiles(in: repo) {
-            try age.decrypt(
-                input: repo.appendingPathComponent(relative),
-                identity: identity,
-                output: repo.appendingPathComponent(String(relative.dropLast(4))))
+            let input = repo.appendingPathComponent(relative)
+            let output = repo.appendingPathComponent(String(relative.dropLast(4)))
+            try age.decrypt(input: input, identity: identity, output: output)
+            if let ageDate = modificationDate(input) {
+                try? FileManager.default.setAttributes(
+                    [.modificationDate: ageDate], ofItemAtPath: output.path)
+            }
         }
+    }
+
+    static func needsEncryption(input: URL, output: URL) -> Bool {
+        guard let ageDate = modificationDate(output) else { return true }
+        guard let plainDate = modificationDate(input) else { return false }
+        return plainDate > ageDate
+    }
+
+    private static func modificationDate(_ url: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 
     private static func scan(_ repo: URL, match: (String) -> Bool) -> [String] {
