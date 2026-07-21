@@ -69,6 +69,14 @@ public struct SyncEngine {
         }
 
         let push = try git.run(["push", "--no-verify", remote, branch])
+        if !push.ok {
+            Log.sync.error("\(root.id): \(Log.failure("push", push), privacy: .public)")
+        }
+        if conflict {
+            Log.sync.notice(
+                "\(root.id, privacy: .public): conflict, remote kept, backup \(backup ?? "none", privacy: .public)"
+            )
+        }
         let result = SyncResult(
             rootID: root.id, timestamp: ts, pushed: push.ok, conflict: conflict,
             backupBranch: backup, pendingBefore: pending,

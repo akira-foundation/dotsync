@@ -56,7 +56,10 @@ public struct GhBridge: Sendable {
     public func createRepo(owner: String, name: String, isPrivate: Bool) throws {
         let visibility = isPrivate ? "--private" : "--public"
         let result = try run(["repo", "create", "\(owner)/\(name)", visibility, "--hostname", host])
-        guard result.ok else { throw GhError.failed(result.stderr) }
+        guard result.ok else {
+            Log.gh.error("\(Log.failure("gh repo create", result), privacy: .public)")
+            throw GhError.failed(result.stderr)
+        }
     }
 
     public func accounts() throws -> [GhAccount] {

@@ -52,6 +52,7 @@ public struct Onboarder: Sendable {
         if !git.isRepo() {
             guard confirm(.initGit) else { return .cancelled }
             guard (try? git.run(["init", "-b", branch]))?.ok == true else {
+                Log.onboard.error("\(root.id, privacy: .public): git init failed")
                 return .failed("git init failed")
             }
         }
@@ -89,6 +90,7 @@ public struct Onboarder: Sendable {
             }
             let url = remoteURLBuilder(settings.github.host, owner, name)
             guard (try? git.run(["remote", "add", "origin", url]))?.ok == true else {
+                Log.onboard.error("\(root.id, privacy: .public): git remote add failed")
                 return .failed("git remote add failed")
             }
         }
@@ -99,6 +101,7 @@ public struct Onboarder: Sendable {
             _ = try? git.run(["commit", "--no-verify", "-m", "dotsync: onboard"])
         }
         guard (try? git.run(["push", "--no-verify", "-u", "origin", branch]))?.ok == true else {
+            Log.onboard.error("\(root.id, privacy: .public): git push failed")
             return .failed("git push failed")
         }
         return .done
