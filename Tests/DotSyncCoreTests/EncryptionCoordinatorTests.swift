@@ -68,6 +68,36 @@ final class EncryptionCoordinatorTests: XCTestCase {
         XCTAssertTrue(EncryptionCoordinator.needsEncryption(input: input, output: output))
     }
 
+    func testEncryptAllKeepsExistingBlobWhenOutputEmpty() throws {
+        let repo = tempRepo()
+        defer { try? FileManager.default.removeItem(at: repo) }
+        try write(repo, "auth.json", "secret\n")
+        try write(repo, "auth.json.age", "OLD-VALID-BLOB")
+        let base = Date(timeIntervalSince1970: 1_000_000)
+        try FileManager.default.setAttributes(
+            [.modificationDate: base.addingTimeInterval(20)],
+            ofItemAtPath: repo.appendingPathComponent("auth.json").path)
+        try FileManager.default.setAttributes(
+            [.modificationDate: base],
+            ofItemAtPath: repo.appendingPathComponent("auth.json.age").path)
+
+        let emptyAge = AgeCrypto(
+            runAge: { args in
+                if let index = args.firstIndex(of: "--output"), index + 1 < args.count {
+                    try? Data().write(to: URL(fileURLWithPath: args[index + 1]))
+                }
+                return ShellResult(stdout: "", stderr: "", exitCode: 0)
+            },
+            runKeygen: { ShellResult(stdout: "", stderr: "", exitCode: 0) })
+
+        try EncryptionCoordinator.encryptAll(repo: repo, age: emptyAge, recipients: ["age1x"])
+
+        XCTAssertEqual(
+            try String(
+                contentsOf: repo.appendingPathComponent("auth.json.age"), encoding: .utf8),
+            "OLD-VALID-BLOB")
+    }
+
     func testEncryptDecryptRoundTrip() throws {
         try XCTSkipUnless(AgeCrypto.available, "age not installed")
         let repo = tempRepo()

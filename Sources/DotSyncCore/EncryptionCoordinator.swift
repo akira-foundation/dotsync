@@ -17,11 +17,21 @@ public enum EncryptionCoordinator {
     }
 
     public static func encryptAll(repo: URL, age: AgeCrypto, recipients: [String]) throws {
+        let fileManager = FileManager.default
         for relative in sensitiveFiles(in: repo) {
             let input = repo.appendingPathComponent(relative)
             let output = repo.appendingPathComponent(relative + ".age")
             guard needsEncryption(input: input, output: output) else { continue }
-            try age.encrypt(input: input, recipients: recipients, output: output)
+
+            let temp = output.appendingPathExtension("tmp")
+            try age.encrypt(input: input, recipients: recipients, output: temp)
+            let size = (try? fileManager.attributesOfItem(atPath: temp.path))?[.size] as? Int ?? 0
+            guard size > 0 else {
+                try? fileManager.removeItem(at: temp)
+                continue
+            }
+            _ = try? fileManager.removeItem(at: output)
+            try fileManager.moveItem(at: temp, to: output)
         }
     }
 
