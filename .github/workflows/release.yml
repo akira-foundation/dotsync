@@ -11,10 +11,13 @@ jobs:
   release:
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Select Xcode 26
-        run: sudo xcode-select -switch /Applications/Xcode_26.app
+      - name: Select newest Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$latest" ]; then sudo xcode-select -switch "$latest"; fi
+          swift --version
 
       - name: Version from tag
         id: v
