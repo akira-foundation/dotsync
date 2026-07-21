@@ -43,7 +43,9 @@ extension SyncViewModel {
             alert.addButton(withTitle: "Continue")
             alert.addButton(withTitle: "Cancel")
             NSApp.activate(ignoringOtherApps: true)
-            return alert.runModal() == .alertFirstButtonReturn
+            return MainActor.assumeIsolated {
+                PopoverGuard.duringModal { alert.runModal() } == .alertFirstButtonReturn
+            }
         }
     }
 
@@ -71,6 +73,6 @@ extension SyncViewModel {
         }
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
-        alert.runModal()
+        PopoverGuard.duringModal { alert.runModal() }
     }
 }
