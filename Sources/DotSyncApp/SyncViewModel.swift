@@ -128,6 +128,8 @@ final class SyncViewModel: ObservableObject {
         let bin = binDir
         let guards = settings.guards
         let ignore = Set(settings.guards.allowlistPaths)
+        let encryption = settings.encryption
+        let host = machineHost
         Task.detached {
             if guards.secretScan {
                 let report = SecretScanner.scanRepo(root.expandedPath, ignore: ignore)
@@ -156,10 +158,13 @@ final class SyncViewModel: ObservableObject {
                         ?? "pc"
                 }
             )
+            SyncViewModel.encryptBeforeSync(
+                repo: root.expandedPath, encryption: encryption, host: host)
             var result: SyncResult?
             if let config = try? Config.load(cfgURL), let root = config.root(id: id) {
                 result = try? engine.sync(root: root, config: config)
             }
+            SyncViewModel.decryptAfterSync(repo: root.expandedPath, encryption: encryption)
             await MainActor.run {
                 self.busy.remove(id)
                 self.blocked.remove(id)

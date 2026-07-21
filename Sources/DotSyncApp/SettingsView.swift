@@ -1,3 +1,4 @@
+import AppKit
 import DotSyncCore
 import SwiftUI
 
@@ -45,6 +46,27 @@ struct SettingsView: View {
                     .font(.callout)
                 Toggle("Launch at login", isOn: launchAtLoginBinding)
                     .font(.callout)
+            }
+
+            section("Encryption") {
+                Toggle("Encrypt secrets", isOn: encryptBinding)
+                    .font(.callout)
+                if let recipient = model.settings.encryption.recipient {
+                    HStack {
+                        Text("This Mac").foregroundStyle(.secondary)
+                        Spacer()
+                        Button {
+                            copyToClipboard(recipient)
+                        } label: {
+                            Label("\(recipient.prefix(14))\u{2026}", systemImage: "doc.on.doc")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .font(.caption)
+                }
+                Text("auth.json, credentials and *.local.json sync encrypted (age)")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
 
             section("Safety") {
@@ -120,6 +142,18 @@ struct SettingsView: View {
             get: { model.settings.launchAtLogin },
             set: { model.setLaunchAtLogin($0) }
         )
+    }
+
+    private var encryptBinding: Binding<Bool> {
+        Binding(
+            get: { model.settings.encryption.enabled },
+            set: { $0 ? model.enableEncryption() : model.disableEncryption() }
+        )
+    }
+
+    private func copyToClipboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     private var watchBinding: Binding<Bool> {
