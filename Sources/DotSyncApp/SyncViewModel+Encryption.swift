@@ -75,7 +75,7 @@ extension SyncViewModel {
             "Could not install age automatically. Install Homebrew, then run `brew install age`."
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
-        alert.runModal()
+        PopoverGuard.duringModal { alert.runModal() }
     }
 
     nonisolated static func encryptBeforeSync(

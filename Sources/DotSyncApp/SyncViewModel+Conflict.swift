@@ -24,7 +24,7 @@ extension SyncViewModel {
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
 
-        switch alert.runModal() {
+        switch PopoverGuard.duringModal({ alert.runModal() }) {
         case .alertFirstButtonReturn:
             try? resolver.keepMine(backup: backup)
             syncNow(id)

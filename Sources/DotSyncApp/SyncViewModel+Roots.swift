@@ -16,7 +16,9 @@ extension SyncViewModel {
         alert.addButton(withTitle: "Cancel")
         alert.buttons.first?.hasDestructiveAction = true
         NSApp.activate(ignoringOtherApps: true)
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard PopoverGuard.duringModal({ alert.runModal() }) == .alertFirstButtonReturn else {
+            return
+        }
 
         if !settings.discovery.ignored.contains(root.expandedPath.path) {
             settings.discovery.ignored.append(root.expandedPath.path)
@@ -75,7 +77,9 @@ extension SyncViewModel {
         panel.allowsMultipleSelection = false
         panel.prompt = "Add"
         panel.message = "Choose a git folder to sync"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard PopoverGuard.duringModal({ panel.runModal() }) == .OK, let url = panel.url else {
+            return
+        }
         addRoot(at: url)
     }
 

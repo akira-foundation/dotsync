@@ -83,10 +83,13 @@ final class SyncViewModel: ObservableObject {
         for row in rows where row.setup == .ready && row.auto && !busy.contains(row.id) {
             guard relevant.contains(where: { $0.hasPrefix(row.path) }) else { continue }
             let pending = (try? Git(repo: URL(fileURLWithPath: row.path)).pending()) ?? []
-            if !pending.isEmpty {
-                syncNow(row.id, announce: false)
-                triggered = true
+            guard !pending.isEmpty else {
+                Log.watch.debug("\(row.id, privacy: .public): change seen, nothing tracked")
+                continue
             }
+            Log.watch.debug("\(row.id, privacy: .public): \(pending.count) tracked, syncing")
+            syncNow(row.id, announce: false)
+            triggered = true
         }
         if triggered { watchCooldownUntil = Date().addingTimeInterval(3) }
     }

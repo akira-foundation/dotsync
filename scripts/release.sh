@@ -17,7 +17,7 @@ SPARKLE_BIN=.build/artifacts/sparkle/Sparkle/bin
 : "${DOWNLOAD_URL_PREFIX:?public URL prefix for the dmg, e.g. https://github.com/<owner>/<repo>/releases/download/v${VERSION}/}"
 
 echo "==> bundle"
-bash scripts/bundle.sh
+DOTSYNC_VERSION="$VERSION" bash scripts/bundle.sh
 
 echo "==> codesign (hardened runtime, inner-out)"
 FW="$APP/Contents/Frameworks/Sparkle.framework"

@@ -96,6 +96,13 @@ struct SettingsView: View {
                         .font(.callout)
                 }
                 .buttonStyle(.plain)
+                Button {
+                    LogWindow.open?()
+                } label: {
+                    Label("View logs\u{2026}", systemImage: "doc.text.magnifyingglass")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 14)

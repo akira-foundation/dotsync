@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updater = Updater()
     private let popover = NSPopover()
     private var statusItem: NSStatusItem?
+    private var logWindow: NSWindow?
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -35,6 +36,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
         updateIcon()
 
+        PopoverGuard.onSuspend = { [weak self] in self?.popover.behavior = .applicationDefined }
+        PopoverGuard.onResume = { [weak self] in self?.popover.behavior = .transient }
+        LogWindow.open = { [weak self] in self?.showLogWindow() }
+
         model.objectWillChange
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateIcon() }
@@ -46,6 +51,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             systemSymbolName: model.menuBarSymbol, accessibilityDescription: "dotsync")
         image?.isTemplate = true
         statusItem?.button?.image = image
+    }
+
+    private func showLogWindow() {
+        if logWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 720, height: 480),
+                styleMask: [.titled, .closable, .resizable, .miniaturizable],
+                backing: .buffered, defer: false)
+            window.title = "dotsync logs"
+            window.contentViewController = NSHostingController(rootView: LogViewerView())
+            window.isReleasedWhenClosed = false
+            window.center()
+            logWindow = window
+        }
+        popover.performClose(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        logWindow?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func togglePopover() {

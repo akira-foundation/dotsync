@@ -18,7 +18,7 @@ extension SyncViewModel {
         }
 
         NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
+        let response = PopoverGuard.duringModal { alert.runModal() }
 
         if !files.isEmpty, response == .alertSecondButtonReturn {
             settings.guards.allowlistPaths = Array(Set(settings.guards.allowlistPaths + files))

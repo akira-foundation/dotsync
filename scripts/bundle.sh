@@ -5,6 +5,8 @@ cd "$(dirname "$0")/.."
 
 REL=.build/arm64-apple-macosx/release
 APP=DotSyncApp.app
+VERSION="${DOTSYNC_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0)}"
+VERSION="${VERSION:-0.0.0}"
 
 swift build -c release --arch arm64 --product DotSyncApp
 
@@ -25,8 +27,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>DotSyncApp</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>__VERSION__</string>
+  <key>CFBundleVersion</key><string>__VERSION__</string>
   <key>LSUIElement</key><true/>
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>LSRequiresNativeExecution</key><true/>
@@ -38,6 +40,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-sed -i '' "s|__SPARKLE_PUBLIC_ED_KEY__|${SPARKLE_PUBLIC_ED_KEY:-}|" "$APP/Contents/Info.plist"
+sed -i '' "s|__VERSION__|${VERSION}|g" "$APP/Contents/Info.plist"
+PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-bGQW9g8uQnY66E1eexl5WdPC7KgGOkDJhE1NoTL8QFw=}"
+sed -i '' "s|__SPARKLE_PUBLIC_ED_KEY__|${PUBLIC_ED_KEY}|" "$APP/Contents/Info.plist"
 
 echo "bundled $APP"
