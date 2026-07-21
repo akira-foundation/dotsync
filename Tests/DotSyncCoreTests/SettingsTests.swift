@@ -38,6 +38,20 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(settings.repoName(for: "claude"), "dotsync-claude")
     }
 
+    func testDiscoveryIgnoredDefaultsEmptyAndTolerant() throws {
+        XCTAssertTrue(Settings().discovery.ignored.isEmpty)
+
+        let json = """
+            { "discovery": { "enabled": true, "autoAdd": true, "paths": ["~/.claude"] } }
+            """
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dotsync-\(UUID().uuidString).json")
+        try Data(json.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        XCTAssertTrue(try Settings.load(url).discovery.ignored.isEmpty)
+    }
+
     func testEncryptionDefaults() {
         let settings = Settings()
         XCTAssertFalse(settings.encryption.enabled)

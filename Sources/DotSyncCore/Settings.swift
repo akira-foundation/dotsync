@@ -24,14 +24,31 @@ public struct DiscoverySettings: Codable, Equatable, Sendable {
     public var enabled: Bool
     public var autoAdd: Bool
     public var paths: [String]
+    public var ignored: [String]
 
     public init(
         enabled: Bool = true, autoAdd: Bool = true,
-        paths: [String] = ["~/.claude", "~/.codex"]
+        paths: [String] = ["~/.claude", "~/.codex"], ignored: [String] = []
     ) {
         self.enabled = enabled
         self.autoAdd = autoAdd
         self.paths = paths
+        self.ignored = ignored
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case enabled, autoAdd, paths, ignored
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        autoAdd = try container.decodeIfPresent(Bool.self, forKey: .autoAdd) ?? true
+        paths =
+            try container.decodeIfPresent([String].self, forKey: .paths) ?? [
+                "~/.claude", "~/.codex",
+            ]
+        ignored = try container.decodeIfPresent([String].self, forKey: .ignored) ?? []
     }
 }
 
