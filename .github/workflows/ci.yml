@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  format:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: sudo xcode-select -switch /Applications/Xcode_26.app
+      - name: Check formatting
+        run: bash scripts/format.sh --lint
+
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: sudo xcode-select -switch /Applications/Xcode_26.app
+      - name: Install age
+        run: brew install age
+      - name: Configure git identity
+        run: |
+          git config --global user.name "dotsync-ci"
+          git config --global user.email "ci@users.noreply.github.com"
+      - name: Run package tests
+        run: swift test --arch arm64
