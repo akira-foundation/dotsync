@@ -49,31 +49,45 @@ struct MenuContent: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
         } else {
-            ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
-                RootRow(
-                    row: row,
-                    busy: model.busy.contains(row.id),
-                    blocked: model.blocked.contains(row.id),
-                    onSync: { model.syncNow(row.id) },
-                    onSetup: { model.onboard(row.id) },
-                    onResolve: { model.resolveConflict(row.id) },
-                    onReveal: {
-                        NSWorkspace.shared.activateFileViewerSelecting([
-                            URL(fileURLWithPath: row.path)
-                        ])
-                    },
-                    onToggleAuto: { model.toggleAuto(row.id) },
-                    onRemove: { model.removeRoot(row.id) },
-                    expanded: model.expandedID == row.id,
-                    onToggleDetail: { model.toggleDetail(row.id) })
-                if model.expandedID == row.id, let detail = model.detail {
-                    RootDetailView(detail: detail)
-                }
-                if index < model.rows.count - 1 {
-                    Divider().opacity(0.25).padding(.leading, 34)
+            LazyVStack(spacing: 8) {
+                ForEach(model.rows) { row in
+                    card(for: row)
                 }
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
         }
+    }
+
+    private func card(for row: RootStatus) -> some View {
+        VStack(spacing: 0) {
+            RootRow(
+                row: row,
+                busy: model.busy.contains(row.id),
+                blocked: model.blocked.contains(row.id),
+                onSync: { model.syncNow(row.id) },
+                onSetup: { model.onboard(row.id) },
+                onResolve: { model.resolveConflict(row.id) },
+                onReveal: {
+                    NSWorkspace.shared.activateFileViewerSelecting([
+                        URL(fileURLWithPath: row.path)
+                    ])
+                },
+                onToggleAuto: { model.toggleAuto(row.id) },
+                onRemove: { model.removeRoot(row.id) },
+                expanded: model.expandedID == row.id,
+                onToggleDetail: { model.toggleDetail(row.id) })
+            if model.expandedID == row.id, let detail = model.detail {
+                Divider().opacity(0.15)
+                RootDetailView(detail: detail)
+            }
+        }
+        .background(
+            RootRow.cardTint(
+                setup: row.setup, conflict: row.conflict,
+                blocked: model.blocked.contains(row.id))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var header: some View {

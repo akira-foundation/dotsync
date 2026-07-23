@@ -63,7 +63,7 @@ struct RootRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .background(rowBackground)
+        .background(hover ? Color.primary.opacity(0.05) : .clear)
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture {
@@ -162,11 +162,11 @@ struct RootRow: View {
 
     private var dotColor: Color { statusColor }
 
-    private var rowBackground: Color {
-        if blocked { return Color.red.opacity(0.09) }
-        if row.conflict { return Color.orange.opacity(0.09) }
-        if row.setup != .ready { return Color.blue.opacity(0.07) }
-        return hover ? Color.primary.opacity(0.06) : .clear
+    static func cardTint(setup: SetupState, conflict: Bool, blocked: Bool) -> Color {
+        if blocked { return Color.red.opacity(0.10) }
+        if conflict { return Color.orange.opacity(0.10) }
+        if setup != .ready { return Color.blue.opacity(0.08) }
+        return Color.primary.opacity(0.05)
     }
 
     private var pathDisplay: String {
