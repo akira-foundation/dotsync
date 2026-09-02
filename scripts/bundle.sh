@@ -14,6 +14,20 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$REL/DotSyncApp" "$APP/Contents/MacOS/DotSyncApp"
 cp -R "$REL/dotsync_DotSyncCore.bundle" "$APP/Contents/MacOS/"
+
+cat > "$APP/Contents/MacOS/dotsync_DotSyncCore.bundle/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>dotsync_DotSyncCore</string>
+  <key>CFBundleIdentifier</key><string>io.akira.dotsync.resources</string>
+  <key>CFBundlePackageType</key><string>BNDL</string>
+  <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+  <key>CFBundleVersion</key><string>${VERSION}</string>
+</dict>
+</plist>
+PLIST
 cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp -R "$REL/Sparkle.framework" "$APP/Contents/Frameworks/"
 

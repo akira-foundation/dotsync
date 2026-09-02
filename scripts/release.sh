@@ -27,6 +27,7 @@ sign "$FW/Versions/B/XPCServices/Downloader.xpc"
 sign "$FW/Versions/B/Updater.app"
 sign "$FW/Versions/B/Autoupdate"
 sign "$FW"
+codesign --force --timestamp --sign "$SIGN_IDENTITY" "$APP/Contents/MacOS/dotsync_DotSyncCore.bundle"
 codesign --force --options runtime --timestamp \
     --entitlements scripts/dotsync.entitlements --sign "$SIGN_IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
