@@ -28,7 +28,7 @@ public struct Git {
 
     @discardableResult
     public func untrack(_ path: String) throws -> ShellResult {
-        try run(["rm", "--cached", "-r", "--ignore-unmatch", "-q", path])
+        try run(["rm", "--cached", "-r", "--ignore-unmatch", "-q", "--", path])
     }
 
     public func pending() throws -> [String] {

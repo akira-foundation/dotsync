@@ -53,4 +53,40 @@ final class BlockedFileResolverTests: XCTestCase {
 
         XCTAssertEqual(guards.allowlistPaths, ["config.toml"])
     }
+
+    func testSyncEncryptedPlaintextIsNotRestagedByAddAll() throws {
+        let fx = try GitFixture.make()
+        defer { fx.cleanup() }
+        try fx.writeFile("config.toml", "value = 1\n")
+        let git = Git(repo: fx.work)
+        _ = try git.run(["add", "-A"])
+        _ = try git.run(["commit", "--no-verify", "-m", "add"])
+
+        var guards = GuardSettings()
+        BlockedFileResolver.apply(
+            .syncEncrypted, files: ["config.toml"], forbidden: [], git: git, guards: &guards)
+
+        _ = try git.run(["add", "-A"])
+        let staged = try git.run(["diff", "--cached", "--name-only"]).stdout
+        XCTAssertFalse(staged.contains("config.toml"))
+        XCTAssertFalse(try git.run(["ls-files"]).stdout.contains("config.toml"))
+    }
+
+    func testIgnoreForbiddenFilePlaintextIsNotRestagedByAddAll() throws {
+        let fx = try GitFixture.make()
+        defer { fx.cleanup() }
+        try fx.writeFile(".credentials.json", "{}\n")
+        let git = Git(repo: fx.work)
+        _ = try git.run(["add", "-A"])
+        _ = try git.run(["commit", "--no-verify", "-m", "add"])
+
+        var guards = GuardSettings()
+        BlockedFileResolver.apply(
+            .ignore, files: [".credentials.json"], forbidden: [".credentials.json"], git: git,
+            guards: &guards)
+
+        _ = try git.run(["add", "-A"])
+        let staged = try git.run(["diff", "--cached", "--name-only"]).stdout
+        XCTAssertFalse(staged.contains(".credentials.json"))
+    }
 }

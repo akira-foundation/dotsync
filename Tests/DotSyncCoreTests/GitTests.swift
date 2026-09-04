@@ -46,4 +46,17 @@ final class GitTests: XCTestCase {
 
         XCTAssertNoThrow(try g.untrack("does-not-exist.json"))
     }
+
+    func testUntrackHandlesPathStartingWithDash() throws {
+        let fx = try GitFixture.make()
+        defer { fx.cleanup() }
+        let g = Git(repo: fx.work)
+
+        try fx.writeFile("-weird.json", "{}\n")
+        _ = try g.run(["add", "-A"])
+        _ = try g.run(["commit", "--no-verify", "-m", "add dash-prefixed file"])
+
+        XCTAssertNoThrow(try g.untrack("-weird.json"))
+        XCTAssertFalse(try g.run(["ls-files"]).stdout.contains("-weird.json"))
+    }
 }
