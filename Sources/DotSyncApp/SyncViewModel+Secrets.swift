@@ -49,8 +49,9 @@ extension SyncViewModel {
         repoPath: String
     ) {
         let git = Git(repo: URL(fileURLWithPath: repoPath))
-        BlockedFileResolver.apply(
+        let applied = BlockedFileResolver.apply(
             action, files: files, forbidden: forbidden, git: git, guards: &settings.guards)
+        guard applied else { return }
         saveSettings()
         blocked.remove(id)
         syncNow(id)

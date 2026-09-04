@@ -89,4 +89,26 @@ final class BlockedFileResolverTests: XCTestCase {
         let staged = try git.run(["diff", "--cached", "--name-only"]).stdout
         XCTAssertFalse(staged.contains(".credentials.json"))
     }
+
+    func testApplyBacksOffWhenRepoIsLocked() throws {
+        let fx = try GitFixture.make()
+        defer { fx.cleanup() }
+        try fx.writeFile("config.toml", "value = 1\n")
+        let git = Git(repo: fx.work)
+        _ = try git.run(["add", "-A"])
+        _ = try git.run(["commit", "--no-verify", "-m", "add"])
+
+        let lockPath = fx.work.appendingPathComponent(".git/dotsync.lock").path
+        let externalLock = FileLock(path: lockPath)
+        XCTAssertTrue(externalLock?.tryLock() ?? false)
+        defer { externalLock?.unlock() }
+
+        var guards = GuardSettings()
+        let applied = BlockedFileResolver.apply(
+            .syncEncrypted, files: ["config.toml"], forbidden: [], git: git, guards: &guards)
+
+        XCTAssertFalse(applied)
+        XCTAssertTrue(guards.forceEncryptPaths.isEmpty)
+        XCTAssertTrue(try git.run(["ls-files"]).stdout.contains("config.toml"))
+    }
 }

@@ -6,19 +6,24 @@ public enum BlockedFileAction: Sendable {
 }
 
 public enum BlockedFileResolver {
+    @discardableResult
     public static func apply(
         _ action: BlockedFileAction, files: [String], forbidden: Set<String>,
         git: Git, guards: inout GuardSettings
-    ) {
+    ) -> Bool {
+        let lockPath = git.repo.appendingPathComponent(".git/dotsync.lock").path
+        guard let lock = FileLock(path: lockPath), lock.tryLock() else { return false }
+        defer { lock.unlock() }
+
         var untracked: [String] = []
         for file in files {
             switch action {
             case .ignore:
-                if forbidden.contains(file), (try? git.untrack(file)) != nil {
+                if forbidden.contains(file), (try? git.untrack(file))?.ok == true {
                     untracked.append(file)
                 }
             case .syncEncrypted:
-                if (try? git.untrack(file)) != nil { untracked.append(file) }
+                if (try? git.untrack(file))?.ok == true { untracked.append(file) }
                 if !guards.forceEncryptPaths.contains(file) {
                     guards.forceEncryptPaths.append(file)
                 }
@@ -30,6 +35,7 @@ public enum BlockedFileResolver {
         guards.allowlistPaths.sort()
         guards.forceEncryptPaths.sort()
         try? denyTracking(untracked, git: git)
+        return true
     }
 
     private static func denyTracking(_ paths: [String], git: Git) throws {
