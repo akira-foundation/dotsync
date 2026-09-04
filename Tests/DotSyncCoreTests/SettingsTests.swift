@@ -12,6 +12,22 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(settings.discovery.paths, ["~/.claude", "~/.codex"])
         XCTAssertTrue(settings.guards.requirePrivate)
         XCTAssertTrue(settings.guards.blockOnTrackedSecrets)
+        XCTAssertTrue(settings.guards.forceEncryptPaths.isEmpty)
+    }
+
+    func testDecodesLegacyGuardsWithoutForceEncryptPaths() throws {
+        let json = """
+            { "guards": { "requirePrivate": true, "secretScan": true,
+              "blockOnTrackedSecrets": true, "allowlistPaths": ["x.json"] } }
+            """
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dotsync-\(UUID().uuidString).json")
+        try Data(json.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let settings = try Settings.load(url)
+        XCTAssertEqual(settings.guards.allowlistPaths, ["x.json"])
+        XCTAssertTrue(settings.guards.forceEncryptPaths.isEmpty)
     }
 
     func testLoadMissingReturnsDefaults() throws {
