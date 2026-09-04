@@ -26,6 +26,11 @@ public struct Git {
         return url.isEmpty ? nil : url
     }
 
+    @discardableResult
+    public func untrack(_ path: String) throws -> ShellResult {
+        try run(["rm", "--cached", "-r", "--ignore-unmatch", "-q", path])
+    }
+
     public func pending() throws -> [String] {
         try run(["status", "--porcelain"])
             .stdout

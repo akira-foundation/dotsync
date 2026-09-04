@@ -8,17 +8,23 @@ public enum EncryptionCoordinator {
         sensitiveNames.contains(name) || sensitiveSuffixes.contains { name.hasSuffix($0) }
     }
 
-    public static func sensitiveFiles(in repo: URL) -> [String] {
-        scan(repo) { isSensitive(($0 as NSString).lastPathComponent) }
+    public static func sensitiveFiles(in repo: URL, forcePaths: Set<String> = []) -> [String] {
+        let scanned = Set(scan(repo) { isSensitive(($0 as NSString).lastPathComponent) })
+        let forced = forcePaths.filter {
+            FileManager.default.fileExists(atPath: repo.appendingPathComponent($0).path)
+        }
+        return scanned.union(forced).sorted()
     }
 
     public static func ageFiles(in repo: URL) -> [String] {
         scan(repo) { $0.hasSuffix(".age") }
     }
 
-    public static func encryptAll(repo: URL, age: AgeCrypto, recipients: [String]) throws {
+    public static func encryptAll(
+        repo: URL, age: AgeCrypto, recipients: [String], forcePaths: Set<String> = []
+    ) throws {
         let fileManager = FileManager.default
-        for relative in sensitiveFiles(in: repo) {
+        for relative in sensitiveFiles(in: repo, forcePaths: forcePaths) {
             let input = repo.appendingPathComponent(relative)
             let output = repo.appendingPathComponent(relative + ".age")
             guard needsEncryption(input: input, output: output) else { continue }

@@ -79,7 +79,7 @@ extension SyncViewModel {
     }
 
     nonisolated static func encryptBeforeSync(
-        repo: URL, encryption: EncryptionSettings, host: String
+        repo: URL, encryption: EncryptionSettings, host: String, forcePaths: Set<String> = []
     ) {
         guard encryption.enabled, AgeCrypto.available, let recipient = encryption.recipient else {
             return
@@ -94,7 +94,8 @@ extension SyncViewModel {
                 in: repo)
         }
         try? EncryptionCoordinator.encryptAll(
-            repo: repo, age: AgeCrypto(), recipients: Recipients.publicKeys(repo))
+            repo: repo, age: AgeCrypto(), recipients: Recipients.publicKeys(repo),
+            forcePaths: forcePaths)
     }
 
     nonisolated static func decryptAfterSync(repo: URL, encryption: EncryptionSettings) {

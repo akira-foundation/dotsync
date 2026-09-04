@@ -80,19 +80,22 @@ public struct GuardSettings: Codable, Equatable, Sendable {
     public var secretScan: Bool
     public var blockOnTrackedSecrets: Bool
     public var allowlistPaths: [String]
+    public var forceEncryptPaths: [String]
 
     public init(
         requirePrivate: Bool = true, secretScan: Bool = true,
-        blockOnTrackedSecrets: Bool = true, allowlistPaths: [String] = []
+        blockOnTrackedSecrets: Bool = true, allowlistPaths: [String] = [],
+        forceEncryptPaths: [String] = []
     ) {
         self.requirePrivate = requirePrivate
         self.secretScan = secretScan
         self.blockOnTrackedSecrets = blockOnTrackedSecrets
         self.allowlistPaths = allowlistPaths
+        self.forceEncryptPaths = forceEncryptPaths
     }
 
     private enum CodingKeys: String, CodingKey {
-        case requirePrivate, secretScan, blockOnTrackedSecrets, allowlistPaths
+        case requirePrivate, secretScan, blockOnTrackedSecrets, allowlistPaths, forceEncryptPaths
     }
 
     public init(from decoder: Decoder) throws {
@@ -102,6 +105,8 @@ public struct GuardSettings: Codable, Equatable, Sendable {
         blockOnTrackedSecrets =
             try container.decodeIfPresent(Bool.self, forKey: .blockOnTrackedSecrets) ?? true
         allowlistPaths = try container.decodeIfPresent([String].self, forKey: .allowlistPaths) ?? []
+        forceEncryptPaths =
+            try container.decodeIfPresent([String].self, forKey: .forceEncryptPaths) ?? []
     }
 }
 

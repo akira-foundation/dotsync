@@ -98,6 +98,40 @@ final class EncryptionCoordinatorTests: XCTestCase {
             "OLD-VALID-BLOB")
     }
 
+    func testSensitiveFilesUnionsForcePathsThatExist() throws {
+        let repo = tempRepo()
+        defer { try? FileManager.default.removeItem(at: repo) }
+        try write(repo, "auth.json")
+        try write(repo, "script.sh")
+
+        XCTAssertEqual(
+            EncryptionCoordinator.sensitiveFiles(
+                in: repo, forcePaths: ["script.sh", "missing.sh"]),
+            ["auth.json", "script.sh"])
+    }
+
+    func testEncryptAllEncryptsForcedNonSensitiveFile() throws {
+        let repo = tempRepo()
+        defer { try? FileManager.default.removeItem(at: repo) }
+        try write(repo, "script.sh", "token = sk-abcdefghijklmnopqrstuvwx\n")
+
+        let age = AgeCrypto(
+            runAge: { args in
+                if let index = args.firstIndex(of: "--output"), index + 1 < args.count {
+                    try? Data("cipher".utf8).write(to: URL(fileURLWithPath: args[index + 1]))
+                }
+                return ShellResult(stdout: "", stderr: "", exitCode: 0)
+            },
+            runKeygen: { ShellResult(stdout: "", stderr: "", exitCode: 0) })
+
+        try EncryptionCoordinator.encryptAll(
+            repo: repo, age: age, recipients: ["age1x"], forcePaths: ["script.sh"])
+
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: repo.appendingPathComponent("script.sh.age").path))
+    }
+
     func testEncryptDecryptRoundTrip() throws {
         try XCTSkipUnless(AgeCrypto.available, "age not installed")
         let repo = tempRepo()

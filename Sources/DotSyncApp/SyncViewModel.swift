@@ -189,7 +189,8 @@ final class SyncViewModel: ObservableObject {
                 }
             )
             SyncViewModel.encryptBeforeSync(
-                repo: root.expandedPath, encryption: encryption, host: host)
+                repo: root.expandedPath, encryption: encryption, host: host,
+                forcePaths: Set(guards.forceEncryptPaths))
             var result: SyncResult?
             if let config = try? Config.load(cfgURL), let root = config.root(id: id) {
                 result = try? engine.sync(root: root, config: config)
