@@ -3,19 +3,21 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-REL=.build/arm64-apple-macosx/release
 APP=DotSyncApp.app
 VERSION="${DOTSYNC_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0)}"
 VERSION="${VERSION:-0.0.0}"
 
 swift build -c release --arch arm64 --product DotSyncApp
+REL="$(swift build -c release --arch arm64 --product DotSyncApp --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$REL/DotSyncApp" "$APP/Contents/MacOS/DotSyncApp"
-cp -R "$REL/dotsync_DotSyncCore.bundle" "$APP/Contents/MacOS/"
+cp -R "$REL/dotsync_DotSyncCore.bundle" "$APP/Contents/Resources/"
+RESOURCE_PLIST="$APP/Contents/Resources/dotsync_DotSyncCore.bundle/Info.plist"
+[ -d "$APP/Contents/Resources/dotsync_DotSyncCore.bundle/Contents" ] && RESOURCE_PLIST="$APP/Contents/Resources/dotsync_DotSyncCore.bundle/Contents/Info.plist"
 
-cat > "$APP/Contents/MacOS/dotsync_DotSyncCore.bundle/Info.plist" <<PLIST
+cat > "$RESOURCE_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
